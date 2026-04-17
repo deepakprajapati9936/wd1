@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Company Employee Attendance</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f7;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #003366;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      margin: 10px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>STEMDAS Technologies - Employee Attendance</h1>
+</header>
+
+<div class="container">
+  <h2>Mark Your Attendance</h2>
+  <input type="text" id="empId" placeholder="Enter Employee ID" />
+  <input type="text" id="empName" placeholder="Enter Employee Name" />
+  <button onclick="markAttendance()">Submit Attendance</button>
+
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th>Employee ID</th>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Records will appear here -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function markAttendance() {
+    const empId = document.getElementById('empId').value.trim();
+    const empName = document.getElementById('empName').value.trim();
+
+    if (!empId || !empName) {
+      alert("Please enter both Employee ID and Name.");
+      return;
+    }
+
+    const now = new Date();
+    const date = now.toLocaleDateString();
+    const time = now.toLocaleTimeString();
+
+    const table = document.getElementById("attendanceTable").getElementsByTagName('tbody')[0];
+    const newRow = table.insertRow();
+
+    newRow.insertCell(0).textContent = empId;
+    newRow.insertCell(1).textContent = empName;
+    newRow.insertCell(2).textContent = date;
+    newRow.insertCell(3).textContent = time;
+
+    document.getElementById('empId').value = "";
+    document.getElementById('empName').value = "";
+  }
+</script>
+
+</body>
+</html>

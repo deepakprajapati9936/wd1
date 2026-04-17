@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Attendance with Excel Export</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 0;
+      margin: 0;
+    }
+
+    header {
+      background-color: #003366;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .export-btn {
+      background-color: #28a745;
+    }
+
+    .export-btn:hover {
+      background-color: #1e7e34;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>STEMDAS Company - Employee Attendance</h1>
+</header>
+
+<div class="container">
+  <input type="text" id="empId" placeholder="Enter Employee ID">
+  <input type="text" id="empName" placeholder="Enter Employee Name">
+  <button onclick="markAttendance()">Mark Attendance</button>
+  <button class="export-btn" onclick="exportToExcel()">Export to Excel</button>
+
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th>Employee ID</th>
+        <th>Employee Name</th>
+        <th>Date</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Entries will go here -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function markAttendance() {
+    const empId = document.getElementById("empId").value.trim();
+    const empName = document.getElementById("empName").value.trim();
+
+    if (!empId || !empName) {
+      alert("Please enter both Employee ID and Name.");
+      return;
+    }
+
+    const now = new Date();
+    const date = now.toLocaleDateString();
+    const time = now.toLocaleTimeString();
+
+    const table = document.getElementById("attendanceTable").getElementsByTagName("tbody")[0];
+    const newRow = table.insertRow();
+
+    newRow.insertCell(0).textContent = empId;
+    newRow.insertCell(1).textContent = empName;
+    newRow.insertCell(2).textContent = date;
+    newRow.insertCell(3).textContent = time;
+
+    // Clear inputs
+    document.getElementById("empId").value = "";
+    document.getElementById("empName").value = "";
+  }
+
+  function exportToExcel() {
+    const table = document.getElementById("attendanceTable");
+    const workbook = XLSX.utils.table_to_book(table, { sheet: "Attendance" });
+    XLSX.writeFile(workbook, "Employee_Attendance.xlsx");
+  }
+</script>
+
+</body>
+</html>

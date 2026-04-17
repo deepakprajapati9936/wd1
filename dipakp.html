@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      margin-top: 50px;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 350px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .error {
+      color: red;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <form id="regForm" onsubmit="return validateForm()">
+    <h2>Registration Form</h2>
+
+    <label>Username</label>
+    <input type="text" id="username" required>
+
+    <label>Password</label>
+    <input type="password" id="password" required>
+
+    <label>Confirm Password</label>
+    <input type="password" id="confirmPassword" required>
+
+    <label>Mobile Number</label>
+    <input type="text" id="mobile" required>
+
+    <label>Email</label>
+    <input type="text" id="email" required>
+
+    <label>Age</label>
+    <input type="number" id="age" required>
+
+    <label>Gender</label>
+    <select id="gender" required>
+      <option value="">--Select Gender--</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <div class="error" id="errorMsg"></div>
+
+    <button type="submit">Register</button>
+  </form>
+
+  <script>
+    function validateForm() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const mobile = document.getElementById("mobile").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const age = parseInt(document.getElementById("age").value);
+      const gender = document.getElementById("gender").value;
+      const errorMsg = document.getElementById("errorMsg");
+
+      // Username check
+      const usernameRegex = /^[A-Z][a-zA-Z0-9]{5,9}$/;
+      if (!usernameRegex.test(username)) {
+        errorMsg.innerText = "Username must start with uppercase and be 6-10 characters.";
+        return false;
+      }
+
+      // Password check
+      if (password.length < 5 || password.length > 8) {
+        errorMsg.innerText = "Password must be between 5-8 characters.";
+        return false;
+      }
+
+      // Confirm password
+      if (password !== confirmPassword) {
+        errorMsg.innerText = "Passwords do not match.";
+        return false;
+      }
+
+      // Mobile number validation (10 digits only)
+      const mobileRegex = /^[6-9]\d{9}$/;
+      if (!mobileRegex.test(mobile)) {
+        errorMsg.innerText = "Enter a valid 10-digit Indian mobile number.";
+        return false;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errorMsg.innerText = "Enter a valid email address.";
+        return false;
+      }
+
+      // Age validation
+      if (isNaN(age) || age <= 21) {
+        errorMsg.innerText = "Age must be greater than 21.";
+        return false;
+      }
+
+      // Gender
+      if (gender === "") {
+        errorMsg.innerText = "Please select your gender.";
+        return false;
+      }
+
+      alert("Form submitted successfully!");
+      return true;
+    }
+  </script>
+</body>
+</html>

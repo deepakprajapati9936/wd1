@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STEMDAS - Employee Attendance</title>
+  <style>
+    :root{--accent:#0b74de;--muted:#666}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f7f9fc;color:#111}
+    header{background:linear-gradient(90deg,#0b74de44,#00b4ff22);padding:18px 22px;border-bottom:1px solid #e6eef9}
+    .container{max-width:1000px;margin:18px auto;padding:18px;background:#fff;border-radius:10px;box-shadow:0 4px 18px rgba(12,33,80,0.06)}
+    h1{margin:0 0 6px;font-size:20px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    form .row{display:flex;gap:8px;margin-bottom:8px}
+    input,select,textarea,button{padding:8px 10px;border:1px solid #d6e6fb;border-radius:6px;font-size:14px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px 10px;border-bottom:1px solid #f1f6fb;text-align:left}
+    th{background:#fbfdff;font-weight:600}
+    .btn{background:var(--accent);color:#fff;border:none;cursor:pointer}
+    .btn.secondary{background:#f3f6fb;color:#0b74de}
+    .small{font-size:13px}
+    .center{text-align:center}
+    .muted{color:var(--muted);font-size:13px}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;background:#eef7ff;color:#0b74de}
+    .actions{display:flex;gap:8px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}
+      .container{margin:8px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h1>STEMDAS — Employee Attendance</h1>
+        <p class="lead">Simple browser app to add employees, mark attendance and export records to Excel.</p>
+      </div>
+      <div class="muted small">Local-only demo — data saved in browser (localStorage)</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <section>
+        <h2 style="font-size:16px;margin-bottom:6px">Employees</h2>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <button class="btn" id="btnAddSample">Add sample employees</button>
+          <button class="btn secondary" id="btnClearAll">Clear all</button>
+        </div>
+
+        <form id="employeeForm">
+          <div class="row">
+            <div style="flex:1">
+              <label for="empName">Name</label>
+              <input id="empName" required placeholder="Full name">
+            </div>
+            <div style="width:120px">
+              <label for="empId">Employee ID</label>
+              <input id="empId" placeholder="E001">
+            </div>
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label for="empDept">Department</label>
+              <input id="empDept" placeholder="Department">
+            </div>
+            <div style="width:120px">
+              <label for="empPhone">Phone</label>
+              <input id="empPhone" placeholder="Optional">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button class="btn" type="submit">Add Employee</button>
+            <button class="btn secondary" id="btnExportEmployees" type="button">Export Employees</button>
+          </div>
+        </form>
+
+        <div id="empListWrap">
+          <table id="empTable">
+            <thead>
+              <tr><th>#</th><th>ID</th><th>Name</th><th>Dept</th><th>Phone</th><th class="center">Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside>
+        <h2 style="font-size:16px;margin-bottom:6px">Attendance</h2>
+        <label for="attDate">Select date</label>
+        <input type="date" id="attDate" style="width:100%;margin-bottom:8px">
+
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button class="btn" id="btnLoadAttendance">Load</button>
+          <button class="btn secondary" id="btnSaveAttendance">Save Attendance</button>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <label class="small">Filter</label>
+          <select id="filterStatus">
+            <option value="all">All</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+          </select>
+        </div>
+
+        <div id="attendanceWrap" style="max-height:420px;overflow:auto">
+          <table id="attTable">
+            <thead>
+              <tr><th>#</th><th>Name</th><th>ID</th><th>Dept</th><th class="center">Present</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" id="btnExportAttendance">Export Attendance (Excel)</button>
+          <button class="btn secondary" id="btnExportAll">Export All Records</button>
+        </div>
+
+        <p class="muted small" style="margin-top:12px">Notes: Export creates an .xlsx file with current attendance. Data is stored in your browser's local storage.</p>
+      </aside>
+    </div>
+  </main>
+
+  <!-- SheetJS (XLSX) from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <script>
+    // Simple client-side app: stores employees and attendance in localStorage
+    const LS_KEY_EMP = 'stemdas_employees_v1';
+    const LS_KEY_ATT = 'stemdas_attendance_v1';
+
+    // Utilities
+    function uid(prefix='id'){return prefix + Math.random().toString(36).slice(2,9)}
+    function saveLS(key, val){localStorage.setItem(key, JSON.stringify(val))}
+    function readLS(key, fallback){const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}
+
+    // Data
+    let employees = readLS(LS_KEY_EMP, []);
+    let attendance = readLS(LS_KEY_ATT, {}); // { '2025-11-24': {empId: 'present'| 'absent'}}
+
+    // DOM refs
+    const empTableBody = document.querySelector('#empTable tbody');
+    const attTableBody = document.querySelector('#attTable tbody');
+    const empForm = document.getElementById('employeeForm');
+    const attDate = document.getElementById('attDate');
+    const filterStatus = document.getElementById('filterStatus');
+
+    // Render employees table
+    function renderEmployees(){
+      empTableBody.innerHTML = '';
+      employees.forEach((e, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${e.employeeId || ''}</td>
+          <td>${e.name}</td>
+          <td>${e.department || ''}</td>
+          <td>${e.phone || ''}</td>
+          <td class="center actions">
+            <button data-id="${e._id}" class="btn small btnEdit">Edit</button>
+            <button data-id="${e._id}" class="btn secondary small btnDel">Delete</button>
+          </td>`;
+        empTableBody.appendChild(tr);
+      });
+    }
+
+    // Render attendance list for selected date
+    function renderAttendance(date){
+      attTableBody.innerHTML = '';
+      if(!date) return;
+      const dayAtt = attendance[date] || {};
+      const filter = filterStatus.value;
+      employees.forEach((e, idx) => {
+        const status = dayAtt[e._id] || 'absent';
+        if(filter !== 'all' && filter !== status) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx+1}</td>
+          <td>${e.name}</td>
+          <td>${e.employeeId || ''}</td>
+          <td>${e.department || ''}</td>
+          <td class="center"><input type="checkbox" data-id="${e._id}" class="chkPresent" ${status==='present'?'checked':''}></td>`;
+        attTableBody.appendChild(tr);
+      });
+    }
+
+    // Add employee
+    empForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const name = document.getElementById('empName').value.trim();
+      const employeeId = document.getElementById('empId').value.trim();
+      const department = document.getElementById('empDept').value.trim();
+      const phone = document.getElementById('empPhone').value.trim();
+      if(!name) return alert('Please enter name');
+      const emp = {_id: uid('emp_'), name, employeeId, department, phone};
+      employees.push(emp);
+      saveLS(LS_KEY_EMP, employees);
+      empForm.reset();
+      renderEmployees();
+      if(attDate.value) renderAttendance(attDate.value);
+    });
+
+    // Delegated clicks for edit/delete
+    empTableBody.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button'); if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      if(btn.classList.contains('btnDel')){
+        if(!confirm('Delete this employee?')) return;
+        employees = employees.filter(x => x._id !== id);
+        saveLS(LS_KEY_EMP, employees);
+        renderEmployees();
+        if(attDate.value) renderAttendance(attDate.value);
+      }
+      if(btn.classList.contains('btnEdit')){
+        const emp = employees.find(x=>x._id===id);
+        if(!emp) return;
+        document.getElementById('empName').value = emp.name;
+        document.getElementById('empId').value = emp.employeeId;
+        document.getElementById('empDept').value = emp.department;
+        document.getElementById('empPhone').value = emp.phone;
+        // remove old and let submit re-add (simple edit flow)
+        employees = employees.filter(x => x._id !== id);
+        saveLS(LS_KEY_EMP, employees);
+        renderEmployees();
+      }
+    });
+
+    // Load attendance for date
+    document.getElementById('btnLoadAttendance').addEventListener('click', () => {
+      const date = attDate.value;
+      if(!date) return alert('Choose a date');
+      renderAttendance(date);
+    });
+
+    // Save attendance
+    document.getElementById('btnSaveAttendance').addEventListener('click', () => {
+      const date = attDate.value;
+      if(!date) return alert('Choose a date');
+      const checkboxes = Array.from(document.querySelectorAll('.chkPresent'));
+      const dayAtt = attendance[date] || {};
+      checkboxes.forEach(cb => {
+        const id = cb.getAttribute('data-id');
+        dayAtt[id] = cb.checked ? 'present' : 'absent';
+      });
+      attendance[date] = dayAtt;
+      saveLS(LS_KEY_ATT, attendance);
+      alert('Attendance saved for ' + date);
+    });
+
+    // When a present checkbox is toggled immediately update in-memory but not saved until Save clicked
+    document.getElementById('attendanceWrap').addEventListener('change', (ev)=>{
+      const cb = ev.target.closest('.chkPresent'); if(!cb) return;
+      // no-op: visual change already reflects state
+    });
+
+    // Export helpers using SheetJS
+    function exportToExcel(filename, sheets){
+      // sheets: {sheetName: array_of_objects}
+      const wb = XLSX.utils.book_new();
+      for(const [name, data] of Object.entries(sheets)){
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      }
+      XLSX.writeFile(wb, filename);
+    }
+
+    // Export employees
+    document.getElementById('btnExportEmployees').addEventListener('click', ()=>{
+      if(employees.length===0) return alert('No employees to export');
+      exportToExcel('stemdas-employees.xlsx', {Employees: employees});
+    });
+
+    // Export attendance for selected date
+    document.getElementById('btnExportAttendance').addEventListener('click', ()=>{
+      const date = attDate.value; if(!date) return alert('Choose a date');
+      const dayAtt = attendance[date] || {};
+      const rows = employees.map(e => ({
+        Name: e.name,
+        EmployeeID: e.employeeId || '',
+        Department: e.department || '',
+        Phone: e.phone || '',
+        Date: date,
+        Status: dayAtt[e._id] || 'absent'
+      }));
+      exportToExcel(`attendance-${date}.xlsx`, {Attendance: rows});
+    });
+
+    // Export all records (each date a sheet)
+    document.getElementById('btnExportAll').addEventListener('click', ()=>{
+      // Build sheets: one sheet per date with joined records
+      if(Object.keys(attendance).length===0) return alert('No attendance records yet');
+      const sheets = {};
+      for(const [date, dayAtt] of Object.entries(attendance)){
+        sheets[date] = employees.map(e => ({
+          Name: e.name,
+          EmployeeID: e.employeeId || '',
+          Department: e.department || '',
+          Phone: e.phone || '',
+          Date: date,
+          Status: dayAtt[e._id] || 'absent'
+        }));
+      }
+      exportToExcel('attendance-all.xlsx', sheets);
+    });
+
+    // Add sample employees
+    document.getElementById('btnAddSample').addEventListener('click', ()=>{
+      const sample=[
+        {_id: uid('emp_'), name:'Amit Sharma', employeeId:'E001', department:'Engineering', phone:'9876543210'},
+        {_id: uid('emp_'), name:'Priya Patel', employeeId:'E002', department:'HR', phone:'9123456780'},
+        {_id: uid('emp_'), name:'Rahul Verma', employeeId:'E003', department:'Sales', phone:'9012345678'}
+      ];
+      employees = employees.concat(sample);
+      saveLS(LS_KEY_EMP, employees);
+      renderEmployees();
+      if(attDate.value) renderAttendance(attDate.value);
+    });
+
+    // Clear all data
+    document.getElementById('btnClearAll').addEventListener('click', ()=>{
+      if(!confirm('Clear all employees and attendance?')) return;
+      employees = [];
+      attendance = {};
+      saveLS(LS_KEY_EMP, employees);
+      saveLS(LS_KEY_ATT, attendance);
+      renderEmployees();
+      attTableBody.innerHTML = '';
+    });
+
+    // Filter change
+    filterStatus.addEventListener('change', ()=>{
+      if(attDate.value) renderAttendance(attDate.value);
+    });
+
+    // Initialize UI
+    (function init(){
+      // set default date to today
+      const today = new Date().toISOString().slice(0,10);
+      attDate.value = today;
+      renderEmployees();
+      renderAttendance(attDate.value);
+    })();
+  </script>
+</body>
+</html>
